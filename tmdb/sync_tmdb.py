@@ -1032,9 +1032,9 @@ def update_db_movie(movies_to_update: list) -> None:
 					]
 
 					# Insérer les valeurs dans Supabase pour tmdb_movie en utilisant ON CONFLICT pour l'upsert
-					cursor.executemany("""
+					cursor.execute(f"""
 						INSERT INTO tmdb_movie (id, adult, backdrop_path, budget, homepage, imdb_id, original_language, original_title, popularity, release_date, revenue, runtime, status, vote_average, vote_count, collection_id)
-						VALUES (%(id)s, %(adult)s, %(backdrop_path)s, %(budget)s, %(homepage)s, %(imdb_id)s, %(original_language)s, %(original_title)s, %(popularity)s, %(release_date)s, %(revenue)s, %(runtime)s, %(status)s, %(vote_average)s, %(vote_count)s, %(collection_id)s)
+						VALUES {', '.join(['(%(id)s, %(adult)s, %(backdrop_path)s, %(budget)s, %(homepage)s, %(imdb_id)s, %(original_language)s, %(original_title)s, %(popularity)s, %(release_date)s, %(revenue)s, %(runtime)s, %(status)s, %(vote_average)s, %(vote_count)s, %(collection_id)s)' for _ in values_to_insert_movie])}
 						ON CONFLICT (id) DO UPDATE
 						SET
 							adult = EXCLUDED.adult,
@@ -1052,8 +1052,10 @@ def update_db_movie(movies_to_update: list) -> None:
 							vote_average = EXCLUDED.vote_average,
 							vote_count = EXCLUDED.vote_count,
 							collection_id = EXCLUDED.collection_id
-					""", values_to_insert_movie)
+					""", [item for sublist in values_to_insert_movie for item in sublist])
 					
+					
+
 					# ========== END TMDB_MOVIE ========== #
 
 					# ========== START TMDB_MOVIE_TRANSLATION ========== #
@@ -1081,16 +1083,28 @@ def update_db_movie(movies_to_update: list) -> None:
 					]
 
 					# Insérer les valeurs dans Supabase pour tmdb_movie_translation en utilisant ON CONFLICT pour l'upsert
-					cursor.executemany("""
+					# cursor.executemany("""
+					# 	INSERT INTO tmdb_movie_translation (movie_id, language_id, overview, poster_path, tagline, title)
+					# 	VALUES (%(movie_id)s, %(language_id)s, %(overview)s, %(poster_path)s, %(tagline)s, %(title)s)
+					# 	ON CONFLICT (movie_id, language_id) DO UPDATE
+					# 	SET
+					# 		overview = EXCLUDED.overview,
+					# 		poster_path = EXCLUDED.poster_path,
+					# 		tagline = EXCLUDED.tagline,
+					# 		title = EXCLUDED.title
+					# """, values_to_insert_movie_translations)
+
+					# use execute instead of executemany to insert multiple rows
+					cursor.execute(f"""
 						INSERT INTO tmdb_movie_translation (movie_id, language_id, overview, poster_path, tagline, title)
-						VALUES (%(movie_id)s, %(language_id)s, %(overview)s, %(poster_path)s, %(tagline)s, %(title)s)
+						VALUES {', '.join(['(%(movie_id)s, %(language_id)s, %(overview)s, %(poster_path)s, %(tagline)s, %(title)s)' for _ in values_to_insert_movie_translations])}
 						ON CONFLICT (movie_id, language_id) DO UPDATE
 						SET
 							overview = EXCLUDED.overview,
 							poster_path = EXCLUDED.poster_path,
 							tagline = EXCLUDED.tagline,
 							title = EXCLUDED.title
-					""", values_to_insert_movie_translations)
+					""", [item for sublist in values_to_insert_movie_translations for item in sublist])
 
 					# ========== END TMDB_MOVIE_TRANSLATION ========== #
 			
@@ -1107,11 +1121,18 @@ def update_db_movie(movies_to_update: list) -> None:
 					]
 
 					# Insérer les valeurs dans Supabase pour tmdb_movie_country en utilisant ON CONFLICT pour l'upsert
-					cursor.executemany("""
+					# cursor.executemany("""
+					# 	INSERT INTO tmdb_movie_country (movie_id, country_id)
+					# 	VALUES (%(movie_id)s, %(country_id)s)
+					# 	ON CONFLICT (movie_id, country_id) DO NOTHING
+					# """, values_to_insert_movie_countries)
+
+					# use execute instead of executemany to insert multiple rows
+					cursor.execute(f"""
 						INSERT INTO tmdb_movie_country (movie_id, country_id)
-						VALUES (%(movie_id)s, %(country_id)s)
+						VALUES {', '.join(['(%(movie_id)s, %(country_id)s)' for _ in values_to_insert_movie_countries])}
 						ON CONFLICT (movie_id, country_id) DO NOTHING
-					""", values_to_insert_movie_countries)
+					""", [item for sublist in values_to_insert_movie_countries for item in sublist])
 					
 					# ========== END TMDB_MOVIE_COUNTRY ========== #
 
@@ -1157,11 +1178,18 @@ def update_db_movie(movies_to_update: list) -> None:
 							values_to_insert_movie_credits.extend(values_crew)
 
 					# Insérer les valeurs dans Supabase pour tmdb_movie_credits en utilisant ON CONFLICT pour l'upsert
-					cursor.executemany("""
+					# cursor.executemany("""
+					# 	INSERT INTO tmdb_movie_credits (id, movie_id, person_id, department, job)
+					# 	VALUES (%(id)s, %(movie_id)s, %(person_id)s, %(department)s, %(job)s)
+					# 	ON CONFLICT (id) DO NOTHING
+					# """, values_to_insert_movie_credits)
+
+					# use execute instead of executemany to insert multiple rows
+					cursor.execute(f"""
 						INSERT INTO tmdb_movie_credits (id, movie_id, person_id, department, job)
-						VALUES (%(id)s, %(movie_id)s, %(person_id)s, %(department)s, %(job)s)
+						VALUES {', '.join(['(%(id)s, %(movie_id)s, %(person_id)s, %(department)s, %(job)s)' for _ in values_to_insert_movie_credits])}
 						ON CONFLICT (id) DO NOTHING
-					""", values_to_insert_movie_credits)
+					""", [item for sublist in values_to_insert_movie_credits for item in sublist])
 					
 					# ========== END TMDB_MOVIE_CREDIT ========== #
 
@@ -1189,11 +1217,18 @@ def update_db_movie(movies_to_update: list) -> None:
 							values_to_insert_movie_roles.extend(values_roles)
 							
 					# Insérer les valeurs dans Supabase pour tmdb_movie_role en utilisant ON CONFLICT pour l'upsert
-					cursor.executemany("""
+					# cursor.executemany("""
+					# 	INSERT INTO tmdb_movie_role (credit_id, character, "order")
+					# 	VALUES (%(credit_id)s, %(character)s, %(order)s)
+					# 	ON CONFLICT (credit_id) DO NOTHING
+					# """, values_to_insert_movie_roles)
+
+					# use execute instead of executemany to insert multiple rows
+					cursor.execute(f"""
 						INSERT INTO tmdb_movie_role (credit_id, character, "order")
-						VALUES (%(credit_id)s, %(character)s, %(order)s)
+						VALUES {', '.join(['(%(credit_id)s, %(character)s, %(order)s)' for _ in values_to_insert_movie_roles])}
 						ON CONFLICT (credit_id) DO NOTHING
-					""", values_to_insert_movie_roles)
+					""", [item for sublist in values_to_insert_movie_roles for item in sublist])
 					
 					# ========== END TMDB_MOVIE_ROLE ========== #
 
@@ -1218,11 +1253,18 @@ def update_db_movie(movies_to_update: list) -> None:
 						values_to_insert_movie_genres.extend(values_genres)
 						
 					# Insérer les valeurs dans Supabase pour tmdb_movie_genre en utilisant ON CONFLICT pour l'upsert
-					cursor.executemany("""
+					# cursor.executemany("""
+					# 	INSERT INTO tmdb_movie_genre (movie_id, genre_id)
+					# 	VALUES (%(movie_id)s, %(genre_id)s)
+					# 	ON CONFLICT (movie_id, genre_id) DO NOTHING
+					# """, values_to_insert_movie_genres)
+
+					# use execute instead of executemany to insert multiple rows
+					cursor.execute(f"""
 						INSERT INTO tmdb_movie_genre (movie_id, genre_id)
-						VALUES (%(movie_id)s, %(genre_id)s)
+						VALUES {', '.join(['(%(movie_id)s, %(genre_id)s)' for _ in values_to_insert_movie_genres])}
 						ON CONFLICT (movie_id, genre_id) DO NOTHING
-					""", values_to_insert_movie_genres)
+					""", [item for sublist in values_to_insert_movie_genres for item in sublist])
 					
 					# ========== END TMDB_MOVIE_GENRE ========== #
 
@@ -1247,11 +1289,18 @@ def update_db_movie(movies_to_update: list) -> None:
 						values_to_insert_movie_keywords.extend(values_keywords)
 						
 					# Insérer les valeurs dans Supabase pour tmdb_movie_keyword en utilisant ON CONFLICT pour l'upsert
-					cursor.executemany("""
+					# cursor.executemany("""
+					# 	INSERT INTO tmdb_movie_keyword (movie_id, keyword_id)
+					# 	VALUES (%(movie_id)s, %(keyword_id)s)
+					# 	ON CONFLICT (movie_id, keyword_id) DO NOTHING
+					# """, values_to_insert_movie_keywords)
+
+					# use execute instead of executemany to insert multiple rows
+					cursor.execute(f"""
 						INSERT INTO tmdb_movie_keyword (movie_id, keyword_id)
-						VALUES (%(movie_id)s, %(keyword_id)s)
+						VALUES {', '.join(['(%(movie_id)s, %(keyword_id)s)' for _ in values_to_insert_movie_keywords])}
 						ON CONFLICT (movie_id, keyword_id) DO NOTHING
-					""", values_to_insert_movie_keywords)
+					""", [item for sublist in values_to_insert_movie_keywords for item in sublist])
 					
 					# ========== END TMDB_MOVIE_KEYWORD ========== #
 
@@ -1276,11 +1325,18 @@ def update_db_movie(movies_to_update: list) -> None:
 						values_to_insert_movie_languages.extend(values_languages)
 						
 					# Insérer les valeurs dans Supabase pour tmdb_movie_language en utilisant ON CONFLICT pour l'upsert
-					cursor.executemany("""
+					# cursor.executemany("""
+					# 	INSERT INTO tmdb_movie_language (movie_id, language_id)
+					# 	VALUES (%(movie_id)s, %(language_id)s)
+					# 	ON CONFLICT (movie_id, language_id) DO NOTHING
+					# """, values_to_insert_movie_languages)
+
+					# use execute instead of executemany to insert multiple rows
+					cursor.execute(f"""
 						INSERT INTO tmdb_movie_language (movie_id, language_id)
-						VALUES (%(movie_id)s, %(language_id)s)
+						VALUES {', '.join(['(%(movie_id)s, %(language_id)s)' for _ in values_to_insert_movie_languages])}
 						ON CONFLICT (movie_id, language_id) DO NOTHING
-					""", values_to_insert_movie_languages)
+					""", [item for sublist in values_to_insert_movie_languages for item in sublist])
 					
 					# ========== END TMDB_MOVIE_LANGUAGE ========== #
 
@@ -1305,11 +1361,18 @@ def update_db_movie(movies_to_update: list) -> None:
 						values_to_insert_movie_production.extend(values_production)
 
 					# Insérer les valeurs dans Supabase pour tmdb_movie_production en utilisant ON CONFLICT pour l'upsert
-					cursor.executemany("""
+					# cursor.executemany("""
+					# 	INSERT INTO tmdb_movie_production (movie_id, company_id)
+					# 	VALUES (%(movie_id)s, %(company_id)s)
+					# 	ON CONFLICT (movie_id, company_id) DO NOTHING
+					# """, values_to_insert_movie_production)
+
+					# use execute instead of executemany to insert multiple rows
+					cursor.execute(f"""
 						INSERT INTO tmdb_movie_production (movie_id, company_id)
-						VALUES (%(movie_id)s, %(company_id)s)
+						VALUES {', '.join(['(%(movie_id)s, %(company_id)s)' for _ in values_to_insert_movie_production])}
 						ON CONFLICT (movie_id, company_id) DO NOTHING
-					""", values_to_insert_movie_production)
+					""", [item for sublist in values_to_insert_movie_production for item in sublist])
 
 					# ========== END TMDB_MOVIE_PRODUCTION ========== #
 
@@ -1364,11 +1427,18 @@ def update_db_movie(movies_to_update: list) -> None:
 						values_to_insert_movie_videos.extend(values_videos_fr)
 						
 					# Insérer les valeurs dans Supabase pour tmdb_movie_videos en utilisant ON CONFLICT pour l'upsert
-					cursor.executemany("""
+					# cursor.executemany("""
+					# 	INSERT INTO tmdb_movie_videos (id, movie_id, iso_639_1, iso_3166_1, name, key, site, size, type, official)
+					# 	VALUES (%(id)s, %(movie_id)s, %(iso_639_1)s, %(iso_3166_1)s, %(name)s, %(key)s, %(site)s, %(size)s, %(type)s, %(official)s)
+					# 	ON CONFLICT (id) DO NOTHING
+					# """, values_to_insert_movie_videos)	
+
+					# use execute instead of executemany to insert multiple rows
+					cursor.execute(f"""
 						INSERT INTO tmdb_movie_videos (id, movie_id, iso_639_1, iso_3166_1, name, key, site, size, type, official)
-						VALUES (%(id)s, %(movie_id)s, %(iso_639_1)s, %(iso_3166_1)s, %(name)s, %(key)s, %(site)s, %(size)s, %(type)s, %(official)s)
+						VALUES {', '.join(['(%(id)s, %(movie_id)s, %(iso_639_1)s, %(iso_3166_1)s, %(name)s, %(key)s, %(site)s, %(size)s, %(type)s, %(official)s)' for _ in values_to_insert_movie_videos])}
 						ON CONFLICT (id) DO NOTHING
-					""", values_to_insert_movie_videos)		
+					""", [item for sublist in values_to_insert_movie_videos for item in sublist])	
 					
 					# ========== END TMDB_MOVIE_VIDEOS========== #
 
